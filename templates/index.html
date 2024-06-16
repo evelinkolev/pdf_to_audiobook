@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Audiobook Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        #audioContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        #loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF to Audiobook Converter</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="pdfFile">Select PDF file:</label>
+        <input type="file" id="pdfFile" name="file" accept="application/pdf" required>
+        <button type="submit">Convert to Audio</button>
+    </form>
+    <div id="loading">Converting, please wait...</div>
+    <div id="audioContainer">
+        <h2>Audio Preview:</h2>
+        <audio id="audioPlayer" controls></audio>
+    </div>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var formData = new FormData();
+            var fileInput = document.getElementById('pdfFile');
+            formData.append('file', fileInput.files[0]);
+
+            var loading = document.getElementById('loading');
+            var audioContainer = document.getElementById('audioContainer');
+            var audioPlayer = document.getElementById('audioPlayer');
+
+            loading.style.display = 'block';
+            audioContainer.style.display = 'none';
+
+            fetch('/pdf-to-audio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                loading.style.display = 'none';
+                if (response.status === 200) {
+                    return response.blob();
+                } else {
+                    return response.json().then(data => { throw new Error(data.error); });
+                }
+            })
+            .then(blob => {
+                var url = URL.createObjectURL(blob);
+                audioPlayer.src = url;
+                audioContainer.style.display = 'block';
+                audioPlayer.play();
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                alert('Error: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
